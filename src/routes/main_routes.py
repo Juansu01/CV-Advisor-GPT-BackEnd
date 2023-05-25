@@ -17,3 +17,10 @@ def about():
                 prompt=json_data['message']
             )
             return response
+
+@bp.route('/save-cv',methods=['POST'])
+def upload_cv():
+    if request.method == 'POST':
+        file = request.files['CV']
+        file.save(f'src/file_storage{file.filename}')
+        return 'File was uploaded.'

@@ -5,6 +5,7 @@ from dotenv import load_dotenv, find_dotenv
 from routes.main_routes import bp
 
 app = Flask(__name__)
+app.config['UPLOAD_FOLDER'] = '/src/file_storage'
 
 
 if __name__ == "__main__":
