@@ -1,26 +1,47 @@
-from flask import Blueprint, request
+from flask import Blueprint, request, jsonify
+from openai.error import RateLimitError
 
-from utils.openai_prompt import get_completion
+from utils.openai_prompt import get_completion, initialize_cv_context
+from utils.read_pdf import read_pdf
 
 bp = Blueprint('routes', __name__)
+
+MESSAGES = []
 
 @bp.route('/')
 def home():
     return "Home"
 
 @bp.route('/send-message-to-gpt',methods=['POST'])
-def about():
+def gpt_message():
+    print("HELLOOO!")
     if request.method == 'POST':
         json_data = request.get_json()
+        print(json_data)
         if json_data.get('message'):
-            response = get_completion(
-                prompt=json_data['message']
+            global MESSAGES
+            try:
+                response, new_messages = get_completion(
+                    messages=MESSAGES,
+                    prompt=json_data['message']
             )
-            return response
+                MESSAGES = new_messages
+            except RateLimitError:
+                return "The model we're using is overloaded, please try again later."
+            return jsonify({'response': response})
 
 @bp.route('/save-cv',methods=['POST'])
 def upload_cv():
     if request.method == 'POST':
-        file = request.files['CV']
-        file.save(f'src/file_storage{file.filename}')
-        return 'File was uploaded.'
+        file = request.files['file']
+        file.save(f'src/file_storage/{file.filename}')
+        return 'File was uploaded.', 200
+
+@bp.route('/initialize-context/<cv_name>',methods=['POST'])
+def initialize_context(cv_name):
+    if request.method == 'POST':
+        print(f"REQUESTING INITIALIZATION FOR: {cv_name}")
+        text = read_pdf(f'src/file_storage/{cv_name}')
+        global MESSAGES
+        MESSAGES = initialize_cv_context(text)
+        return "CV INITIALIZED"
