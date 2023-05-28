@@ -44,4 +44,13 @@ def initialize_context(cv_name):
         text = read_pdf(f'src/file_storage/{cv_name}')
         global MESSAGES
         MESSAGES = initialize_cv_context(text)
-        return "CV INITIALIZED"
+        try:
+            response, new_messages = get_completion(
+                messages=MESSAGES,
+                prompt="""Say hello using the name in my CV,
+                tell me what you can do for me."""
+            )
+            MESSAGES = new_messages
+        except RateLimitError:
+                return "The model we're using is overloaded, please try again later.", 500
+        return jsonify({'response': response})

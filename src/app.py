@@ -14,4 +14,4 @@ if __name__ == "__main__":
     _ = load_dotenv(find_dotenv())
     port = os.getenv('PORT')
     app.register_blueprint(bp)
-    app.run(port=port)
+    app.run(port=port, host="localhost")
